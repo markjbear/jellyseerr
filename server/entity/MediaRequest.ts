@@ -793,6 +793,7 @@ export class MediaRequest {
           )?.rootFolder;
           if (overrideRootFolder) {
             rootFolder = overrideRootFolder;
+            this.rootFolder = rootFolder;
             logger.info(
               `Request has an override root folder from override rules: ${rootFolder}`,
               {
@@ -823,6 +824,7 @@ export class MediaRequest {
           )?.profileId;
           if (overrideProfileId) {
             qualityProfile = overrideProfileId;
+            this.profileId = qualityProfile;
             logger.info(
               `Request has an override quality profile ID from override rules: ${qualityProfile}`,
               {
@@ -853,6 +855,7 @@ export class MediaRequest {
                 ...overrideTags.split(',').map((tag) => Number(tag)),
               ]),
             ];
+            this.tags = tags;
             logger.info(`Request has override tags from override rules`, {
               label: 'Media Request',
               requestId: this.id,
@@ -861,6 +864,9 @@ export class MediaRequest {
             });
           }
         }
+
+        const requestRepository = getRepository(MediaRequest);
+        requestRepository.save(this);
 
         if (radarrSettings.tagRequests) {
           let userTag = (await radarr.getTags()).find((v) =>
@@ -903,7 +909,6 @@ export class MediaRequest {
             mediaId: this.media.id,
           });
 
-          const requestRepository = getRepository(MediaRequest);
           this.status = MediaRequestStatus.APPROVED;
           await requestRepository.save(this);
           return;
@@ -943,8 +948,6 @@ export class MediaRequest {
             await mediaRepository.save(media);
           })
           .catch(async () => {
-            const requestRepository = getRepository(MediaRequest);
-
             this.status = MediaRequestStatus.FAILED;
             requestRepository.save(this);
 
@@ -1044,6 +1047,7 @@ export class MediaRequest {
           throw new Error('Media data not found');
         }
 
+        const requestRepository = getRepository(MediaRequest);
         if (
           media[this.is4k ? 'status4k' : 'status'] === MediaStatus.AVAILABLE
         ) {
@@ -1053,7 +1057,6 @@ export class MediaRequest {
             mediaId: this.media.id,
           });
 
-          const requestRepository = getRepository(MediaRequest);
           this.status = MediaRequestStatus.APPROVED;
           await requestRepository.save(this);
           return;
@@ -1068,7 +1071,6 @@ export class MediaRequest {
         const tvdbId = series.external_ids.tvdb_id ?? media.tvdbId;
 
         if (!tvdbId) {
-          const requestRepository = getRepository(MediaRequest);
           await mediaRepository.remove(media);
           await requestRepository.remove(this);
           throw new Error('TVDB ID not found');
@@ -1172,6 +1174,7 @@ export class MediaRequest {
           )?.rootFolder;
           if (overrideRootFolder) {
             rootFolder = overrideRootFolder;
+            this.rootFolder = rootFolder;
             logger.info(
               `Request has an override root folder from override rules: ${rootFolder}`,
               {
@@ -1199,6 +1202,7 @@ export class MediaRequest {
           )?.profileId;
           if (overrideProfileId) {
             qualityProfile = overrideProfileId;
+            this.profileId = qualityProfile;
             logger.info(
               `Request has an override quality profile ID from override rules: ${qualityProfile}`,
               {
@@ -1244,6 +1248,7 @@ export class MediaRequest {
                 ...overrideTags.split(',').map((tag) => Number(tag)),
               ]),
             ];
+            this.tags = tags;
             logger.info(`Request has override tags from override rules`, {
               label: 'Media Request',
               requestId: this.id,
@@ -1285,6 +1290,8 @@ export class MediaRequest {
           }
         }
 
+        requestRepository.save(this);
+
         const sonarrSeriesOptions: AddSeriesOptions = {
           profileId: qualityProfile,
           languageProfileId: languageProfile,
@@ -1321,8 +1328,6 @@ export class MediaRequest {
             await mediaRepository.save(media);
           })
           .catch(async () => {
-            const requestRepository = getRepository(MediaRequest);
-
             this.status = MediaRequestStatus.FAILED;
             requestRepository.save(this);
 
